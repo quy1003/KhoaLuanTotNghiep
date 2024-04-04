@@ -105,10 +105,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
-
+CKEDITOR_UPLOAD_PATH = "ckeditor/images/"
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL ='kltn.User'
+import cloudinary
+
+cloudinary.config(
+  cloud_name = "dbdd85bp4",
+  api_key = "947314781637449",
+  api_secret = "aEQ5nlEGafd_SBz7ZxK2QfcCzWQ"
+)
