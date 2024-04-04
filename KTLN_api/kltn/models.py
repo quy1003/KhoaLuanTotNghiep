@@ -4,17 +4,29 @@ from ckeditor.fields import RichTextField
 from cloudinary.models import CloudinaryField
 import datetime
 
+
 class User(AbstractUser):
     avt = CloudinaryField()
+    phone = models.CharField(max_length=20, null=False, unique=True)
+    diachi = models.CharField(max_length=150, null=False)
+    ngaysinh = models.DateField(null=True)
+    gioitinh = models.CharField(max_length=20, null=False)
 
 
 class SinhVien(User):
+    mssv = models.CharField(max_length=30, null=False, unique=True)
+    gpa = models.FloatField()
+    nganh = models.ForeignKey('Nganh', on_delete=models.CASCADE, related_name='SinhVien_Nganh')
+    nienkhoa = models.ForeignKey('NienKhoa', on_delete=models.CASCADE)
+
     class Meta:
         verbose_name_plural = 'Sinh Vien'
         verbose_name = 'Sinh Vien'
 
 
 class GiaoVu(User):
+    chucvu = models.CharField(max_length=30, null=False)
+
     class Meta:
         verbose_name_plural = 'Giao Vu'
         verbose_name = 'Giao Vu'
@@ -22,6 +34,8 @@ class GiaoVu(User):
 
 class Khoa(models.Model):
     ten_khoa = models.CharField(max_length=100, unique=True, null=False)
+    mota = models.CharField(max_length=255, null=True)
+    namthanhlap = models.DateField()
 
     class Meta:
         verbose_name_plural = 'Khoa'
@@ -44,6 +58,7 @@ class Nganh(models.Model):
 
 
 class NienKhoa(models.Model):
+    ten_nienkhoa = models.CharField(max_length=25, null=False)
     nam_batdau = models.DateField()
     nam_ketthuc = models.DateField()
 
@@ -56,6 +71,7 @@ class NienKhoa(models.Model):
 
 
 class GiangVien(User):
+    hocham = models.CharField(max_length=25, null=False)
     khoa = models.ForeignKey(Khoa, on_delete=models.CASCADE)
 
     class Meta:
@@ -67,8 +83,9 @@ class HoiDong(models.Model):
     chutich = models.ForeignKey(GiangVien, on_delete=models.CASCADE, related_name='hoidong_chutichvien')
     thuky = models.ForeignKey(GiangVien, on_delete=models.CASCADE, related_name='hoidong_thuky')
     phanbien = models.ForeignKey(GiangVien, on_delete=models.CASCADE, related_name='hoidong_phanbien')
-    giangvien = models.ManyToManyField(GiangVien, related_name='hoidong_giangvien')
+    giangvien = models.ManyToManyField('GiangVien', related_name='hoidong_giangvien')
     khoaluan = models.ManyToManyField('KhoaLuan', related_name='hoidong_khoaluan')
+    # trangthai = models.CharField(max_length=50, null=False)
 
     class Meta:
         verbose_name_plural = 'Hoi Dong'
@@ -95,7 +112,7 @@ class KhoaLuan(models.Model):
     nganh = models.ForeignKey(Nganh, on_delete=models.CASCADE)
     hoidong = models.ForeignKey(HoiDong, on_delete=models.PROTECT, related_name='khoaluan_hoidong')
     giangvien = models.ManyToManyField(GiangVien, related_name='khoaluan_giangvien')
-    sinhvien = models.ManyToManyField(SinhVien,related_name='khoaluan_sinhvien')
+    sinhvien = models.ManyToManyField(SinhVien, related_name='khoaluan_sinhvien')
     nienkhoa = models.ForeignKey(NienKhoa, on_delete=models.CASCADE)
 
     class Meta:
@@ -110,7 +127,7 @@ class Diem(models.Model):
     giangvien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
     tieuchi = models.ForeignKey(TieuChi, on_delete=models.CASCADE)
     khoaluan = models.ForeignKey(KhoaLuan, on_delete=models.CASCADE)
-    sodiem = models.IntegerField()
+    sodiem = models.FloatField()
     nhanxet = RichTextField(null=True)
 
     class Meta:
