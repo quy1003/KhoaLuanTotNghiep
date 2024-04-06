@@ -1,21 +1,31 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from ckeditor.fields import RichTextField
 from cloudinary.models import CloudinaryField
+from django.contrib.auth.hashers import make_password
 import datetime
 
 
 class User(AbstractUser):
     avt = CloudinaryField()
-    phone = models.CharField(max_length=20, null=False, unique=True)
-    diachi = models.CharField(max_length=150, null=False)
-    ngaysinh = models.DateField(null=True)
-    gioitinh = models.CharField(max_length=20, null=False)
+    phone = models.CharField(max_length=20, null=True, default='999999999')
+    diachi = models.CharField(max_length=255, null=True, default='TP HCM')
+    ngaysinh = models.DateField(null=True, default='2003-01-01')
+    gioitinh = models.BooleanField(null=True)
 
 
 class SinhVien(User):
-    mssv = models.CharField(max_length=30, null=False, unique=True)
-    gpa = models.FloatField()
+    khoaluan = models.ForeignKey('KhoaLuan', on_delete=models.PROTECT, related_name='sinhvien_khoaluan', null=True)
+    nganh = models.ForeignKey('Nganh', on_delete=models.CASCADE)
+    nienkhoa = models.ForeignKey('NienKhoa', on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        # Băm mật khẩu trước khi lưu vào cơ sở dữ liệu
+        if self.password:
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
+
+
+class SinhVien(User):
     nganh = models.ForeignKey('Nganh', on_delete=models.CASCADE, related_name='SinhVien_Nganh')
     nienkhoa = models.ForeignKey('NienKhoa', on_delete=models.CASCADE)
 
@@ -25,17 +35,20 @@ class SinhVien(User):
 
 
 class GiaoVu(User):
-    chucvu = models.CharField(max_length=30, null=False)
+    chucvu = models.CharField(max_length=100, null=False)
 
     class Meta:
         verbose_name_plural = 'Giao Vu'
         verbose_name = 'Giao Vu'
 
+    def save(self, *args, **kwargs):
+        if self.password:
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
+
 
 class Khoa(models.Model):
     ten_khoa = models.CharField(max_length=100, unique=True, null=False)
-    mota = models.CharField(max_length=255, null=True)
-    namthanhlap = models.DateField()
 
     class Meta:
         verbose_name_plural = 'Khoa'
@@ -58,12 +71,11 @@ class Nganh(models.Model):
 
 
 class NienKhoa(models.Model):
-    ten_nienkhoa = models.CharField(max_length=25, null=False)
     nam_batdau = models.DateField()
     nam_ketthuc = models.DateField()
 
     def __str__(self):
-        return self.nam_batdau, self.nam_ketthuc
+        return str(self.nam_batdau)
 
     class Meta:
         verbose_name_plural = 'Nien Khoa'
@@ -71,21 +83,24 @@ class NienKhoa(models.Model):
 
 
 class GiangVien(User):
-    hocham = models.CharField(max_length=25, null=False)
+    hocham = models.CharField(max_length=30)
     khoa = models.ForeignKey(Khoa, on_delete=models.CASCADE)
 
     class Meta:
         verbose_name_plural = 'Giang Vien'
         verbose_name = 'Giang Vien'
 
+    def save(self, *args, **kwargs):
+        if self.password:
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
+
 
 class HoiDong(models.Model):
     chutich = models.ForeignKey(GiangVien, on_delete=models.CASCADE, related_name='hoidong_chutichvien')
     thuky = models.ForeignKey(GiangVien, on_delete=models.CASCADE, related_name='hoidong_thuky')
     phanbien = models.ForeignKey(GiangVien, on_delete=models.CASCADE, related_name='hoidong_phanbien')
-    giangvien = models.ManyToManyField('GiangVien', related_name='hoidong_giangvien')
-    khoaluan = models.ManyToManyField('KhoaLuan', related_name='hoidong_khoaluan')
-    # trangthai = models.CharField(max_length=50, null=False)
+    giangvien = models.ManyToManyField(GiangVien, related_name='hoidong_giangvien')
 
     class Meta:
         verbose_name_plural = 'Hoi Dong'
@@ -105,14 +120,12 @@ class TieuChi(models.Model):
 
 class KhoaLuan(models.Model):
     giaovu = models.ForeignKey(GiaoVu, on_delete=models.PROTECT)
-    ten_khoaluan = models.CharField(max_length=155)
-    mo_ta = models.CharField(max_length=255)
+    ten_khoaluan = models.CharField(max_length=200)
+    mo_ta = models.TextField(null=True)
     ngay_tao = models.DateTimeField(auto_now_add=True)
     ngay_capnhat = models.DateTimeField(auto_now=True)
-    nganh = models.ForeignKey(Nganh, on_delete=models.CASCADE)
-    hoidong = models.ForeignKey(HoiDong, on_delete=models.PROTECT, related_name='khoaluan_hoidong')
+    hoidong = models.ForeignKey(HoiDong, on_delete=models.PROTECT, related_name='khoaluan_hoidong', null=True)
     giangvien = models.ManyToManyField(GiangVien, related_name='khoaluan_giangvien')
-    sinhvien = models.ManyToManyField(SinhVien, related_name='khoaluan_sinhvien')
     nienkhoa = models.ForeignKey(NienKhoa, on_delete=models.CASCADE)
 
     class Meta:
@@ -127,8 +140,8 @@ class Diem(models.Model):
     giangvien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
     tieuchi = models.ForeignKey(TieuChi, on_delete=models.CASCADE)
     khoaluan = models.ForeignKey(KhoaLuan, on_delete=models.CASCADE)
-    sodiem = models.FloatField()
-    nhanxet = RichTextField(null=True)
+    sodiem = models.IntegerField()
+    nhanxet = models.TextField(null=True)
 
     class Meta:
         verbose_name_plural = 'Diem'
