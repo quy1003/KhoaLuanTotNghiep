@@ -25,15 +25,6 @@ class SinhVien(User):
         super().save(*args, **kwargs)
 
 
-class SinhVien(User):
-    nganh = models.ForeignKey('Nganh', on_delete=models.CASCADE, related_name='SinhVien_Nganh')
-    nienkhoa = models.ForeignKey('NienKhoa', on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name_plural = 'Sinh Vien'
-        verbose_name = 'Sinh Vien'
-
-
 class GiaoVu(User):
     chucvu = models.CharField(max_length=100, null=False)
 
