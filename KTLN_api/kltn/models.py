@@ -12,17 +12,20 @@ class User(AbstractUser):
     ngaysinh = models.DateField(null=True, default='2003-01-01')
     gioitinh = models.BooleanField(null=True)
 
+    def save(self, *args, **kwargs):
+        if self.password:
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
+
 
 class SinhVien(User):
     khoaluan = models.ForeignKey('KhoaLuan', on_delete=models.PROTECT, related_name='sinhvien_khoaluan', null=True)
     nganh = models.ForeignKey('Nganh', on_delete=models.CASCADE)
     nienkhoa = models.ForeignKey('NienKhoa', on_delete=models.CASCADE)
 
-    def save(self, *args, **kwargs):
-        # Băm mật khẩu trước khi lưu vào cơ sở dữ liệu
-        if self.password:
-            self.password = make_password(self.password)
-        super().save(*args, **kwargs)
+    class Meta:
+        verbose_name_plural = 'Sinh Vien'
+        verbose_name = 'Sinh Vien'
 
 
 class GiaoVu(User):
@@ -31,11 +34,6 @@ class GiaoVu(User):
     class Meta:
         verbose_name_plural = 'Giao Vu'
         verbose_name = 'Giao Vu'
-
-    def save(self, *args, **kwargs):
-        if self.password:
-            self.password = make_password(self.password)
-        super().save(*args, **kwargs)
 
 
 class Khoa(models.Model):
@@ -81,21 +79,34 @@ class GiangVien(User):
         verbose_name_plural = 'Giang Vien'
         verbose_name = 'Giang Vien'
 
-    def save(self, *args, **kwargs):
-        if self.password:
-            self.password = make_password(self.password)
-        super().save(*args, **kwargs)
-
 
 class HoiDong(models.Model):
-    chutich = models.ForeignKey(GiangVien, on_delete=models.CASCADE, related_name='hoidong_chutichvien')
-    thuky = models.ForeignKey(GiangVien, on_delete=models.CASCADE, related_name='hoidong_thuky')
-    phanbien = models.ForeignKey(GiangVien, on_delete=models.CASCADE, related_name='hoidong_phanbien')
-    giangvien = models.ManyToManyField(GiangVien, related_name='hoidong_giangvien')
+    giangvien = models.ManyToManyField(GiangVien, through='Hoidong_Giangvien', related_name='giangviens')
 
     class Meta:
         verbose_name_plural = 'Hoi Dong'
         verbose_name = 'Hoi Dong'
+
+
+class ChucVu(models.Model):
+    chucvu = models.CharField(max_length=30)
+
+    def __str__(self):
+        return self.chucvu
+
+    class Meta:
+        verbose_name_plural = 'Chuc Vu'
+        verbose_name = 'Chuc Vu'
+
+
+class Hoidong_Giangvien(models.Model):
+    hoidong = models.ForeignKey(HoiDong, on_delete=models.CASCADE)
+    giangvien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
+    chucvu = models.ForeignKey(ChucVu, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name_plural = 'Hoi Dong - Giang Vien'
+        verbose_name = 'Hoi Dong - Giang Vien'
 
 
 class TieuChi(models.Model):
@@ -118,6 +129,7 @@ class KhoaLuan(models.Model):
     hoidong = models.ForeignKey(HoiDong, on_delete=models.PROTECT, related_name='khoaluan_hoidong', null=True)
     giangvien = models.ManyToManyField(GiangVien, related_name='khoaluan_giangvien')
     nienkhoa = models.ForeignKey(NienKhoa, on_delete=models.CASCADE)
+    tieuchi = models.ManyToManyField(TieuChi)
 
     class Meta:
         verbose_name_plural = 'Khoa Luan'
@@ -128,9 +140,8 @@ class KhoaLuan(models.Model):
 
 
 class Diem(models.Model):
-    giangvien = models.ForeignKey(GiangVien, on_delete=models.CASCADE)
+    giangvien_hoidong = models.ForeignKey(Hoidong_Giangvien, on_delete=models.CASCADE)
     tieuchi = models.ForeignKey(TieuChi, on_delete=models.CASCADE)
-    khoaluan = models.ForeignKey(KhoaLuan, on_delete=models.CASCADE)
     sodiem = models.IntegerField()
     nhanxet = models.TextField(null=True)
 
