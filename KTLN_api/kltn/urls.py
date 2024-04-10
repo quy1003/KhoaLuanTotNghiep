@@ -3,16 +3,13 @@ from django.urls import path,re_path,include
 from . import views
 from rest_framework.routers import DefaultRouter
 
-router = DefaultRouter()
-router.register('sinhvien',views.SinhVienViewset)
-router.register('giangvien',views.GiangVienViewset)
+# router = DefaultRouter()
+# router.register('sinhviens',views.SinhVienViewset, basename='sinhvien')
+# router.register('giangviens',views.GiangVienViewset, basename='giangvien')
+# router.register('tieuchis', views.TieuChiViewset, basename='tieuchis')
 
-#/courses/-GET
-#/courses/-POST
-#/courses/{course_id}/ GET
-#/courses/{course_id}/ PUT
 
-urlpatterns = [
-    path('', include(router.urls)),
-
-]
+# urlpatterns = [
+#     path('', include(router.urls)),
+#
+# ]

@@ -68,7 +68,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'kltndb',
         'USER': 'root',
-        'PASSWORD': 'Huutoan123@',
+        'PASSWORD': 'Thiquy0779179473',
         'HOST': ''  # mặc định localhost
     }
 }
