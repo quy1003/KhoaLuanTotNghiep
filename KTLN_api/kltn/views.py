@@ -1,27 +1,22 @@
-# from django.shortcuts import render
-# from django.views import View
-# from rest_framework import viewsets, permissions
-# from .models import SinhVien, GiangVien, TieuChi
-# from .serializers import SinhVienSerializer,GiangVienSerializer,GiaoVuSerializer,KhoaLuanSerializer, TieuChiSerializer
-# from rest_framework import generics
-#
-# class SinhVienViewset(viewsets.ModelViewSet):
-#     queryset = SinhVien.objects.filter(is_active = True)
-#     serializer_class = SinhVienSerializer
-#     def get_permissions(self):
-#         if self.action == 'list':
-#             return [permissions.AllowAny()]
-#         return [permissions.IsAuthenticated()]
-#
-# class GiangVienViewset(viewsets.ModelViewSet):
-#     queryset = GiangVien.objects.filter(is_active = True)
-#     serializer_class = GiangVienSerializer
-#     def get_permissions(self):
-#         if self.action == 'list':
-#             return [permissions.AllowAny()]
-#         return [permissions.IsAuthenticated()]
-#
-#
-# class TieuChiViewset(viewsets.ViewSet, generics.ListAPIView):
-#     queryset = TieuChi.objects.all()
-#     serializer_class = TieuChiSerializer
+from django.shortcuts import render
+from django.views import View
+from rest_framework import viewsets, permissions
+from .models import *
+from .serializers import *
+from rest_framework import generics
+from django.db.models import Prefetch
+
+class KhoaViewset(viewsets.ModelViewSet, generics.ListAPIView):
+    queryset = Khoa.objects.all()
+    serializer_class = KhoaSerializer
+
+
+class HoiDongViewset(viewsets.ModelViewSet, generics.ListAPIView):
+    queryset = HoiDong.objects.prefetch_related('thanhviens').all()
+    serializer_class = HoiDongSerializer
+
+
+class ThanhVienHoiDongViewset(viewsets.ModelViewSet, generics.ListAPIView):
+
+    queryset = ThanhVien_HoiDong.objects.all()
+    serializer_class = ThanhVienHoiDongSerializer

@@ -1,26 +1,39 @@
-# from rest_framework.serializers import ModelSerializer
-# from .models import SinhVien,GiangVien,GiaoVu,HoiDong,Hoidong_Giangvien,KhoaLuan, TieuChi
-#
-# class SinhVienSerializer(ModelSerializer):
-#     class Meta:
-#         model = SinhVien
-#         fields = "__all__"
-#
-# class GiangVienSerializer(ModelSerializer):
-#     class Meta:
-#         model = GiangVien
-#         fields = "__all__"
-# class GiaoVuSerializer(ModelSerializer):
-#     class Meta:
-#         model = GiaoVu
-#         fields = "__all__"
-# class KhoaLuanSerializer(ModelSerializer):
-#     class Meta:
-#         model = KhoaLuan
-#         fields = "__all__"
-#
-#
-# class TieuChiSerializer(ModelSerializer):
-#     class Meta:
-#         model = TieuChi
-#         fields = '__all__'
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from .models import *
+from rest_framework import serializers
+
+
+class UserInfoSerializer(ModelSerializer):
+    full_name = SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['full_name']
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+
+
+class ThanhVienHoiDongSerializer(ModelSerializer):
+    full_name = SerializerMethodField()
+
+    class Meta:
+        model = ThanhVien_HoiDong
+        fields = ['id','vaitro', 'thanhvien', 'full_name']
+
+    def get_full_name(self, obj):
+        return f"{obj.thanhvien.first_name} {obj.thanhvien.last_name}"
+
+class KhoaSerializer(ModelSerializer):
+    class Meta:
+        model = Khoa
+        fields = '__all__'
+
+
+class HoiDongSerializer(ModelSerializer):
+    thanhviens = ThanhVienHoiDongSerializer(source='thanhvien_hoidong_set',many=True)
+
+    class Meta:
+        model = HoiDong
+        fields = ['id', 'ten', 'thanhviens']
+

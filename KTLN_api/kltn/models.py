@@ -27,7 +27,7 @@ class User(AbstractUser):
 class HoiDong(models.Model):
     ten = models.CharField(max_length=100, null=True)
     thanhviens = models.ManyToManyField(User
-                                       ,related_name='dsthanhvien',
+                                       ,related_name='thanhviens',
                                        through='ThanhVien_HoiDong')
 
     class Meta:
@@ -40,30 +40,38 @@ class HoiDong(models.Model):
 
 class ThanhVien_HoiDong(models.Model):
     roles = (
-        ('TRUONG BAN', 'truong ban'),
+        ('CHU TICH', 'chu tich'),
         ('THU KY', 'thu ky'),
-        ('PHO BAN', 'pho ban'),
-        ('PHAN BIEN', 'phan bien')
+        ('PHAN BIEN', 'phan bien'),
+        ('THANH VIEN KHAC', 'thanh vien khac')
     )
     thanhvien = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'chucvu': 'giangvien'})
     hoidong = models.ForeignKey(HoiDong, on_delete=models.CASCADE)
-    chucvu = models.CharField(choices=roles, null=False, max_length=100)
+    vaitro = models.CharField(choices=roles, null=False, max_length=100,default='THANH VIEN KHAC')
 
     class Meta:
         unique_together = ['thanhvien', 'hoidong']
         verbose_name_plural = 'Thanh Vien - Hoi Dong'
         verbose_name = 'Thanh Vien - Hoi Dong'
 
+    def clean(self):
+        super().clean()
+        count_thanhvien_hoidong = self.hoidong.thanhviens.count()
+        if count_thanhvien_hoidong == 5:
+            raise ValidationError('Lỗi: Hội đồng đã đủ số lượng thành viên.')
+        existing_chu_tich = ThanhVien_HoiDong.objects.filter(hoidong=self.hoidong, vaitro='CHU TICH').exists()
+        existing_thu_ky = ThanhVien_HoiDong.objects.filter(hoidong=self.hoidong, vaitro='THU KY').exists()
+        existing_phan_bien = ThanhVien_HoiDong.objects.filter(hoidong=self.hoidong, vaitro='PHAN BIEN').exists()
+
+        if self.vaitro == 'CHU TICH' and existing_chu_tich:
+            raise ValidationError('Lỗi: Hội đồng này đã có chức vụ Chủ tịch.')
+        elif self.vaitro == 'THU KY' and existing_thu_ky:
+            raise ValidationError('Lỗi: Hội đồng này đã có chức vụ Thư ký.')
+        elif self.vaitro == 'PHAN BIEN' and existing_phan_bien:
+            raise ValidationError('Lỗi: Hội đồng này đã có chức vụ Phản biện.')
+
 
 class Khoa(models.Model):
-    # ds_khoa = (
-    #     ('IT', 'Cong Nghe Thong Tin'),
-    #     ('AU', 'Ke Kiem'),
-    #     ('BT', 'Cong Nghe Sinh Hoc'),
-    #     ('FB', 'Tai Chinh Ngan Hang'),
-    #     ('AS', 'Dao Tao Dac Biet'),
-    #     ('BA', 'Quan Tri Kinh Doanh')
-    # )
     ten = models.CharField(max_length=100, unique=True)
 
     class Meta:
@@ -83,7 +91,7 @@ class KhoaLuan(models.Model):
     ghichu = models.TextField(blank=True, null=True)
     khoa = models.ForeignKey(Khoa, on_delete=models.CASCADE)
     hoidong = models.ForeignKey(HoiDong, on_delete=models.CASCADE, blank=True, null=True)
-    gv_huongdan = models.ManyToManyField(User, related_name='gv_huongdans')
+    gv_huongdan = models.ManyToManyField(User, related_name='gv_huongdans', limit_choices_to={'chucvu':'giangvien'})
     sinhvien = models.ManyToManyField(User, related_name='sinhviens',limit_choices_to={'chucvu': 'hocsinh'})
     class Meta:
         verbose_name_plural = 'Khoa Luan'
