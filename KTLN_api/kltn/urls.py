@@ -8,7 +8,6 @@ router.register('khoas', views.KhoaViewset, basename='khoas')
 router.register('hoidongs', views.HoiDongViewset, basename='hoidongs')
 router.register('tvhds', views.ThanhVienHoiDongViewset, basename='tvhds')
 
-
 urlpatterns = [
     path('', include(router.urls)),
 

@@ -29,7 +29,6 @@ class HoiDong(models.Model):
     thanhviens = models.ManyToManyField(User
                                        ,related_name='thanhviens',
                                        through='ThanhVien_HoiDong')
-    trangthai = models.BooleanField(default=0)
     class Meta:
         verbose_name_plural = 'Hoi Dong'
         verbose_name = 'Hoi Dong'
@@ -37,6 +36,12 @@ class HoiDong(models.Model):
     def __str__(self):
         return self.ten
 
+    def update_trangthai(self):
+        if self.thanhviens.count() >=3:
+            self.trangthai = True;
+        else:
+            self.trangthai = False;
+        self.save()
 
 class ThanhVien_HoiDong(models.Model):
     roles = (
