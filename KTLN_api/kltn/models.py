@@ -29,7 +29,7 @@ class HoiDong(models.Model):
     thanhviens = models.ManyToManyField(User
                                        ,related_name='thanhviens',
                                        through='ThanhVien_HoiDong')
-
+    trangthai = models.BooleanField(default=0)
     class Meta:
         verbose_name_plural = 'Hoi Dong'
         verbose_name = 'Hoi Dong'
@@ -93,6 +93,8 @@ class KhoaLuan(models.Model):
     hoidong = models.ForeignKey(HoiDong, on_delete=models.CASCADE, blank=True, null=True)
     gv_huongdan = models.ManyToManyField(User, related_name='gv_huongdans', limit_choices_to={'chucvu':'giangvien'})
     sinhvien = models.ManyToManyField(User, related_name='sinhviens',limit_choices_to={'chucvu': 'hocsinh'})
+    trangthai = models.BooleanField(default=1)
+
     class Meta:
         verbose_name_plural = 'Khoa Luan'
         verbose_name = 'Khoa Luan'
