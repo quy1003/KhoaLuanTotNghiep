@@ -54,5 +54,8 @@ class HoiDongSerializer(ModelSerializer):
             trangthai = False
         return trangthai
 
+class VaitroSerializer(serializers.Serializer):
+    class Meta:
+        model = serializers.CharField()
 
 

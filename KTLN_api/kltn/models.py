@@ -53,7 +53,7 @@ class ThanhVien_HoiDong(models.Model):
     thanhvien = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'chucvu': 'giangvien'})
     hoidong = models.ForeignKey(HoiDong, on_delete=models.CASCADE)
     vaitro = models.CharField(choices=roles, null=False, max_length=100,default='THANH VIEN KHAC')
-
+    
     class Meta:
         unique_together = ['thanhvien', 'hoidong']
         verbose_name_plural = 'Thanh Vien - Hoi Dong'

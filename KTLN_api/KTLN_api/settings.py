@@ -121,7 +121,10 @@ cloudinary.config(
   api_key = "947314781637449",
   api_secret = "aEQ5nlEGafd_SBz7ZxK2QfcCzWQ"
 )
-
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'django.contrib.auth.backends.AllowAllUsersModelBackend'
+]
 #Settings send_emails
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # Host SMTP của bạn
