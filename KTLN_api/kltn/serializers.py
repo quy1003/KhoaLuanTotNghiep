@@ -14,21 +14,24 @@ class UserInfoSerializer(ItemSerializer):
 
     class Meta:
         model = User
-        fields = ['username','full_name','email', 'chucvu', 'avt']
+        fields = ['id','username','full_name','email', 'chucvu', 'avt']
 
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}"
 
 
 class ThanhVienHoiDongSerializer(ModelSerializer):
-    full_name = SerializerMethodField()
 
     class Meta:
         model = ThanhVien_HoiDong
-        fields = ['id','vaitro', 'thanhvien', 'full_name']
+        fields = ['vaitro']
 
-    def get_full_name(self, obj):
-        return f"{obj.thanhvien.first_name} {obj.thanhvien.last_name}"
+class ThanhVienHoiDongDetailSerializer(ModelSerializer):
+
+    class Meta:
+        model = ThanhVien_HoiDong
+        fields = ['id', 'vaitro']
+
 
 class KhoaSerializer(ModelSerializer):
     class Meta:
@@ -37,12 +40,12 @@ class KhoaSerializer(ModelSerializer):
 
 
 class HoiDongSerializer(ModelSerializer):
-    thanhviens = ThanhVienHoiDongSerializer(source='thanhvien_hoidong_set',many=True)
+    thanhviens = ThanhVienHoiDongSerializer(source='thanhvien_hoidong_set',many=True, read_only=True)
     trangthai = SerializerMethodField()
 
     class Meta:
         model = HoiDong
-        fields = ['id', 'ten', 'trangthai', 'trangthai','thanhviens']
+        fields = ['id', 'ten', 'trangthai','thanhviens']
 
     def get_trangthai(self, obj):
         if obj.thanhviens.count() >=3:

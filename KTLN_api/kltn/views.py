@@ -10,7 +10,7 @@ from .serializers import *
 from rest_framework import generics
 from django.db.models import Prefetch
 
-class KhoaViewset(viewsets.ModelViewSet, generics.ListAPIView):
+class KhoaViewset(viewsets.ViewSet, generics.ListCreateAPIView):
     queryset = Khoa.objects.all()
     serializer_class = KhoaSerializer
 
@@ -49,5 +49,5 @@ class HoiDongViewset(viewsets.ModelViewSet, generics.ListAPIView):
 class ThanhVienHoiDongViewset(viewsets.ModelViewSet, generics.ListAPIView):
 
     queryset = ThanhVien_HoiDong.objects.all()
-    serializer_class = ThanhVienHoiDongSerializer
+    serializer_class = ThanhVienHoiDongDetailSerializer
 
