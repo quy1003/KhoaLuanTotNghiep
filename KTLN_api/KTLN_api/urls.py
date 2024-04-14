@@ -19,6 +19,8 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('', include('kltn.urls')),
     path('admin/', admin.site.urls),
+    path('o/', include('oauth2_provider.urls',
+namespace='oauth2_provider')),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$',
             schema_view.without_ui(cache_timeout=0),
             name='schema-json'),
@@ -29,3 +31,6 @@ urlpatterns = [
             schema_view.with_ui('redoc', cache_timeout=0),
             name='schema-redoc')
 ]
+
+CLIENT_ID = '5jPcCeaYo0s5VGjOCj6Vy4S2SUU8NPaqEPdl3FpN'
+CLIENT_SECRET = 'XQ0j8PcB2hv3uY5MxFR5s7QLTGcghUPOKVYXnqVXqP5YObNnD8Dz8aviKiKYbGWWSV7cNDKyLNLzZNXTNqc4YqtHDPVfMrJvhuKsy0MZuFvwD6Yy9etHEB1QWvFdos7d'

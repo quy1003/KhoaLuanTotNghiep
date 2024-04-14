@@ -2,6 +2,13 @@ from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from .models import *
 from rest_framework import serializers
 
+
+class KhoaSerializer(ModelSerializer):
+    class Meta:
+        model = Khoa
+        fields = '__all__'
+
+
 class ItemSerializer(ModelSerializer):
     def to_representation(self, instance):
         req = super().to_representation(instance)
@@ -33,11 +40,18 @@ class ThanhVienHoiDongDetailSerializer(ModelSerializer):
         fields = ['id', 'vaitro']
 
 
-class KhoaSerializer(ModelSerializer):
+class DiemTieuChiSerializer(ModelSerializer):
     class Meta:
-        model = Khoa
-        fields = '__all__'
+        model = Diem_TieuChi
+        fields = ['sodiem', 'nhanxet', 'nguoi_danhgia']
 
+
+class DiemSerializer(ModelSerializer):
+    chitiet = DiemTieuChiSerializer(source='diem_tieuchi_set',many=True, read_only=True)
+
+    class Meta:
+        model = Diem
+        fields = ['id', 'khoaluan', 'chitiet']
 
 class HoiDongSerializer(ModelSerializer):
     thanhviens = ThanhVienHoiDongSerializer(source='thanhvien_hoidong_set',many=True, read_only=True)
@@ -79,3 +93,6 @@ class KhoaLuanInfoSerializer(ModelSerializer):
     class Meta:
         model = KhoaLuan
         fields = ['ten']
+
+
+

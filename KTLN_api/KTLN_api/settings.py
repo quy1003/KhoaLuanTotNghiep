@@ -28,7 +28,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'kltn',
     'rest_framework',
-    'drf_yasg'
+    'drf_yasg',
+    'oauth2_provider',
 ]
 
 MIDDLEWARE = [
@@ -132,3 +133,13 @@ EMAIL_PORT = 587  # Port SMTP của bạn
 EMAIL_USE_TLS = True  # Sử dụng TLS cho email
 EMAIL_HOST_USER = 'nguyenhuutoan010@gmail.com'  # Tài khoản email của bạn
 EMAIL_HOST_PASSWORD = 'vosoawnodgzbcqzk'  # Mật khẩu email của bạn
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+    'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+)
+}
+
+# OAUTH2_PROVIDER = {
+#     'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore'
+# }

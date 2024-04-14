@@ -132,3 +132,35 @@ class UserViewset(viewsets.ViewSet, generics.CreateAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
     parser_classes = [parsers.MultiPartParser]
+
+    def get_permissions(self):
+        if self.action.__eq__('current_user'):
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
+    @action(methods=['get'], url_name='current-user', detail=False)
+    def current_user(selfs, request):
+        request.user
+        return Response(UserSerializer(request.user).data)
+
+
+class DiemViewset(viewsets.ViewSet, generics.ListAPIView):
+    queryset = Diem.objects.prefetch_related('tieuchi')
+    serializer_class = DiemSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+# class HoiDongViewset(viewsets.ViewSet, generics.ListCreateAPIView):
+#     queryset = HoiDong.objects.prefetch_related('thanhviens').all()
+#     serializer_class = HoiDongSerializer
+#     permission_classes = [permissions.AllowAny]
+#
+#     def get_queryset(self):
+#         queryset = self.queryset
+#         q = self.request.query_params.get('q')
+#         if q:
+#             queryset = queryset.filter(ten__icontains=q)
+#         return queryset
+# class DiemChiTietViewset(viewsets.ViewSet, generics.ListAPIView):
+#     queryset = Diem_TieuChi.objects.all()
+#     serializer_class = DiemTieuChiSerializer

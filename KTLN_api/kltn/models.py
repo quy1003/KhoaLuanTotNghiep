@@ -155,5 +155,5 @@ class Diem_TieuChi(models.Model):
 
     def clean(self):
         super().clean()
-        if self.nguoi_danhgia and self.diem.khoaluan.hoidong.thanhviens.all().exists():
+        if not self.diem.khoaluan.hoidong.thanhviens.filter(id=self.nguoi_danhgia.id).exists():
             raise ValidationError("Người đánh giá phải thuộc hội đồng.")
