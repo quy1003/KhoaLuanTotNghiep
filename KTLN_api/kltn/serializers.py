@@ -58,4 +58,24 @@ class VaitroSerializer(serializers.Serializer):
     class Meta:
         model = serializers.CharField()
 
+class UserSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        data = validated_data.copy()
+        user = User(**data)
+        user.set_password(user.password)
+        user.save()
+        return user
 
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'username', 'password', 'email', 'avt', 'chucvu']
+        extra_kwargs = {
+            'password':{
+                'write_only':'true'
+            }
+        }
+
+class KhoaLuanInfoSerializer(ModelSerializer):
+    class Meta:
+        model = KhoaLuan
+        fields = ['ten']

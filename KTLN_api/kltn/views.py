@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.views import View
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, parsers
 from rest_framework.response import Response
 from django.db.models import Q
 from rest_framework.decorators import action
@@ -12,15 +12,48 @@ from .serializers import *
 from rest_framework import generics
 from django.db.models import Prefetch
 from kltn.perms import IsPermitUser
+
 class KhoaViewset(viewsets.ViewSet, generics.ListCreateAPIView):
     queryset = Khoa.objects.all()
     serializer_class = KhoaSerializer
 
 
-class HoiDongViewset(viewsets.ModelViewSet, generics.ListAPIView):
+class Khoa_KhoaLuanViewset(viewsets.ViewSet, generics.RetrieveAPIView):
+    queryset = Khoa.objects.all()
+    serializer_class = KhoaSerializer
+
+    @action(methods=['get'], url_path='khoaluans', detail=True)
+    def get_khoaluans(self, request, pk):
+        khoa = self.get_object()
+        khoaluans = KhoaLuan.objects.filter(khoa=khoa)
+        q = request.query_params.get('q')
+        if q:
+            khoaluans = khoaluans.filter(ten__icontains=q)
+
+        serializer = KhoaLuanInfoSerializer(khoaluans, many=True)
+
+        return Response(serializer.data,
+                        status=status.HTTP_200_OK)
+
+
+class HoiDongViewset(viewsets.ViewSet, generics.ListCreateAPIView):
     queryset = HoiDong.objects.prefetch_related('thanhviens').all()
     serializer_class = HoiDongSerializer
     permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        queryset = self.queryset
+        q = self.request.query_params.get('q')
+        if q:
+            queryset = queryset.filter(ten__icontains=q)
+        return queryset
+
+
+class HoiDongDetailViewset(viewsets.ViewSet, generics.RetrieveAPIView):
+    queryset = HoiDong.objects.prefetch_related('thanhviens').all()
+    serializer_class = HoiDongSerializer
+    permission_classes = [permissions.AllowAny]
+
     def get_queryset(self):
         queryset = self.queryset
 
@@ -94,3 +127,8 @@ class ThanhVienHoiDongViewset(viewsets.ModelViewSet, generics.ListAPIView):
     queryset = ThanhVien_HoiDong.objects.all()
     serializer_class = ThanhVienHoiDongDetailSerializer
 
+
+class UserViewset(viewsets.ViewSet, generics.CreateAPIView):
+    queryset = User.objects.filter(is_active=True)
+    serializer_class = UserSerializer
+    parser_classes = [parsers.MultiPartParser]

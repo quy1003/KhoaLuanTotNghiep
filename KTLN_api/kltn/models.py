@@ -21,7 +21,7 @@ class User(AbstractUser):
         verbose_name = 'User'
 
     def __str__(self):
-        return self.get_full_name()
+        return str(self.get_full_name())
 
 
 class HoiDong(models.Model):
@@ -84,7 +84,7 @@ class Khoa(models.Model):
         verbose_name = 'Khoa'
 
     def __str__(self):
-        return self.ten
+        return str(self.ten)
 
 
 class KhoaLuan(models.Model):
@@ -105,7 +105,7 @@ class KhoaLuan(models.Model):
         verbose_name = 'Khoa Luan'
 
     def __str__(self):
-        return self.ten
+        return str(self.ten)
 
 
 class TieuChi(models.Model):
