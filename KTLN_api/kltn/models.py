@@ -4,7 +4,23 @@ from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
 from django.contrib.auth.hashers import make_password
 import datetime
+class TieuChi(models.Model):
+    ds_tieuchi = (
+        ('HINH THUC', 'hinh thuc'),
+        ('PHAN BIEN', 'phan bien'),
+        ('THUC HIEN', 'thuc hien'),
+        ('DO KHO', 'do kho'),
+        ('MO RONG', 'mo rong'),
+        ('UNG DUNG', 'ung dung')
+    )
+    ten = models.CharField(choices=ds_tieuchi, max_length=100)
 
+    class Meta:
+        verbose_name_plural = 'Tieu Chi'
+        verbose_name = 'Tieu Chi'
+
+    def __str__(self):
+        return self.ten
 
 class User(AbstractUser):
     roles = (
@@ -99,7 +115,7 @@ class KhoaLuan(models.Model):
     gv_huongdan = models.ManyToManyField(User, related_name='gv_huongdans', limit_choices_to={'chucvu':'giangvien'})
     sinhvien = models.ManyToManyField(User, related_name='sinhviens',limit_choices_to={'chucvu': 'hocsinh'})
     trangthai = models.BooleanField(default=1)
-
+    tieuchis = models.ManyToManyField(TieuChi, through='khoaluan_tieuchi',related_name='tieuchis')
     class Meta:
         verbose_name_plural = 'Khoa Luan'
         verbose_name = 'Khoa Luan'
@@ -107,53 +123,25 @@ class KhoaLuan(models.Model):
     def __str__(self):
         return str(self.ten)
 
-
-class TieuChi(models.Model):
-    ds_tieuchi = (
-        ('HINH THUC', 'hinh thuc'),
-        ('PHAN BIEN', 'phan bien'),
-        ('THUC HIEN', 'thuc hien'),
-        ('DO KHO', 'do kho'),
-        ('MO RONG', 'mo rong'),
-        ('UNG DUNG', 'ung dung')
-    )
-    ten = models.CharField(choices=ds_tieuchi, max_length=100)
-
-    class Meta:
-        verbose_name_plural = 'Tieu Chi'
-        verbose_name = 'Tieu Chi'
-
-    def __str__(self):
-        return self.ten
-
-
-class Diem(models.Model):
+class KhoaLuan_TieuChi(models.Model):
     khoaluan = models.ForeignKey(KhoaLuan, on_delete=models.CASCADE)
-    tieuchi = models.ManyToManyField(TieuChi, through='Diem_TieuChi',
-                                     related_name='tieuchis')
-
-    class Meta:
-        verbose_name_plural = 'Diem'
-        verbose_name = 'Diem'
-
-    def __str__(self):
-        return self.khoaluan.ten
-
-
-class Diem_TieuChi(models.Model):
-    diem = models.ForeignKey(Diem, on_delete=models.CASCADE)
     tieuchi = models.ForeignKey(TieuChi, on_delete=models.CASCADE)
-    sodiem = models.FloatField()
-    nhanxet = models.TextField(null=True, blank=True)
-    nguoi_danhgia = models.ForeignKey(User, on_delete=models.CASCADE,
-                                      limit_choices_to={'chucvu':'giangvien'}, null=True)
-
-    class Meta:
-        unique_together = ['nguoi_danhgia', 'tieuchi']
-        verbose_name_plural = 'Chi Tiet Diem'
-        verbose_name = 'Chi Tiet Diem'
-
+    so_diem = models.FloatField()
+    nhanxet = models.CharField(max_length=100, blank=True)
+    nguoi_danhgia = models.ForeignKey(User, models.CASCADE)
     def clean(self):
         super().clean()
-        if not self.diem.khoaluan.hoidong.thanhviens.filter(id=self.nguoi_danhgia.id).exists():
+        if not self.khoaluan.hoidong.thanhviens.filter(id=self.nguoi_danhgia.id).exists():
             raise ValidationError("Người đánh giá phải thuộc hội đồng.")
+# class Diem(models.Model):
+#     khoaluan = models.ForeignKey(KhoaLuan, models.CASCADE)
+#     tieuchi = models.ForeignKey(TieuChi, models.CASCADE)
+#     sodiem = models.FloatField()
+#     nhanxet = models.CharField(max_length=200)
+#     nguoi_danhgia = models.ForeignKey(User, models.CASCADE)
+#
+#     def clean(self):
+#         super().clean()
+#         if not self.khoaluan.hoidong.thanhviens.filter(id=self.nguoi_danhgia.id).exists():
+#             raise ValidationError("Người đánh giá phải thuộc hội đồng.")
+#
