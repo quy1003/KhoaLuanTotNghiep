@@ -15,10 +15,10 @@ SECRET_KEY = 'django-insecure-9zc3)=eczgk&y7xq%m)%%2)u8pzd!!_d^wp1im=e#rnvs_dzpu
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+
 
 # Application definition
-
+CORS_ORIGINS_WHITELIST = ['*']
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -29,10 +29,14 @@ INSTALLED_APPS = [
     'kltn',
     'rest_framework',
     'drf_yasg',
+    'corsheaders',
     'oauth2_provider',
+
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -42,6 +46,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
+ALLOWED_HOSTS = ['*']
 ROOT_URLCONF = 'KTLN_api.urls'
 
 TEMPLATES = [
@@ -141,5 +150,6 @@ REST_FRAMEWORK = {
 }
 
 OAUTH2_PROVIDER = {
-    'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore'
+    'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore',
+
 }

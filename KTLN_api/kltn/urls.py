@@ -12,6 +12,11 @@ router.register('hoidongdetail', views.HoiDongDetailViewset,basename='hoidongdet
 router.register('khoa_khoaluans', views.Khoa_KhoaLuanViewset, basename='khoa_khoaluans')
 router.register('diems', views.DiemViewset, basename='diems')
 router.register('diem_detail', views.DiemDetailViewset, basename='diem_detail')
+router.register('dskhoaluan', views.ListKhoaLuanViewSet, basename='dskhoaluan')
+router.register('khoaluans', views.KhoaLuanViewset, basename='khoaluans')
+router.register('tieuchis', views.TieuChiViewset, basename='tieuchis')
+
+
 urlpatterns = [
     path('', include(router.urls)),
 

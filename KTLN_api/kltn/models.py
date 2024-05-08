@@ -49,15 +49,7 @@ class HoiDong(models.Model):
         verbose_name_plural = 'Hoi Dong'
         verbose_name = 'Hoi Dong'
 
-    def __str__(self):
-        return self.ten
 
-    def update_trangthai(self):
-        if self.thanhviens.count() >=3:
-            self.trangthai = True;
-        else:
-            self.trangthai = False;
-        self.save()
 
 class ThanhVien_HoiDong(models.Model):
     roles = (
@@ -133,15 +125,3 @@ class KhoaLuan_TieuChi(models.Model):
         super().clean()
         if not self.khoaluan.hoidong.thanhviens.filter(id=self.nguoi_danhgia.id).exists():
             raise ValidationError("Người đánh giá phải thuộc hội đồng.")
-# class Diem(models.Model):
-#     khoaluan = models.ForeignKey(KhoaLuan, models.CASCADE)
-#     tieuchi = models.ForeignKey(TieuChi, models.CASCADE)
-#     sodiem = models.FloatField()
-#     nhanxet = models.CharField(max_length=200)
-#     nguoi_danhgia = models.ForeignKey(User, models.CASCADE)
-#
-#     def clean(self):
-#         super().clean()
-#         if not self.khoaluan.hoidong.thanhviens.filter(id=self.nguoi_danhgia.id).exists():
-#             raise ValidationError("Người đánh giá phải thuộc hội đồng.")
-#
