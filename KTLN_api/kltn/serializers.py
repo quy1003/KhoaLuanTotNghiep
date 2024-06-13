@@ -107,7 +107,7 @@ class UserSerializer(ItemSerializer):
 class KhoaLuanInfoSerializer(ModelSerializer):
     class Meta:
         model = KhoaLuan
-        fields = ['ten']
+        fields = ['id','ten']
 
 
 class ChiTietDiemSerializer(ModelSerializer):
@@ -185,7 +185,9 @@ class UserInfoWithRoleSerializer(ItemSerializer):
         return f"{obj.first_name} {obj.last_name}"
 
     def get_vaitro(self, obj):
-        thanhvien_hoidong = ThanhVien_HoiDong.objects.filter(thanhvien=obj).first()
+        hoidong_id = self.context.get('hoidong_id')
+        print("serializer:", hoidong_id)
+        thanhvien_hoidong = ThanhVien_HoiDong.objects.get(thanhvien=obj, hoidong_id=hoidong_id)
         if thanhvien_hoidong:
             return thanhvien_hoidong.get_vaitro_display()
         return None
@@ -196,3 +198,24 @@ class ThanhVien_HoiDongSerializer(ModelSerializer):
     class Meta:
         model = ThanhVien_HoiDong
         fields = ['hoidong','hoidong_ten', 'vaitro']
+
+###
+class TieuChiDetailSerializer(ModelSerializer):
+    class Meta:
+        model = TieuChi
+        fields = '__all__'
+
+class TieuChiNotIn(ModelSerializer):
+    class Meta:
+        model = TieuChi
+        fields = '__all__'
+
+class EmailSerializer(ModelSerializer):
+    class Meta:
+       model = User
+       fields = ['email']
+
+class UserNameAndId(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'id']

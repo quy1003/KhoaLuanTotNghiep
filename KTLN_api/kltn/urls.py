@@ -15,9 +15,11 @@ router.register('diem_detail', views.DiemDetailViewset, basename='diem_detail')
 router.register('dskhoaluan', views.ListKhoaLuanViewSet, basename='dskhoaluan')
 router.register('khoaluans', views.KhoaLuanViewset, basename='khoaluans')
 router.register('tieuchis', views.TieuChiViewset, basename='tieuchis')
-
-
+router.register('emails', views.EmailViewset, basename='emails')
+router.register('suggests', views.UserInfoViewset, basename='suggest')
 urlpatterns = [
     path('', include(router.urls)),
+    path('home/', views.home, name='home'),
+    path('chitiet_diem/<int:id>/', views.diem_detail, name='diem_detail'),
 
 ]

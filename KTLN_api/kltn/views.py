@@ -13,7 +13,7 @@ from rest_framework import generics
 from django.db.models import Prefetch
 from kltn.perms import IsPermitUser, IsPermitUserGivePoint, IsPermitMinistry
 from . import paginators
-
+from django.shortcuts import render
 class KhoaViewset(viewsets.ViewSet, generics.ListCreateAPIView):
     queryset = Khoa.objects.all()
     serializer_class = KhoaSerializer
@@ -73,7 +73,8 @@ class HoiDongDetailViewset(viewsets.ViewSet, generics.RetrieveAPIView):
         hoidong = self.get_object()
         thanhviens = hoidong.thanhviens.all()
 
-        serializer = UserInfoWithRoleSerializer(thanhviens, many=True)
+        serializer = UserInfoWithRoleSerializer(thanhviens, many=True,context={'hoidong_id': hoidong.id})
+        print(hoidong.id)
         return Response(serializer.data,
                         status=status.HTTP_200_OK)
 
@@ -119,9 +120,35 @@ class HoiDongDetailViewset(viewsets.ViewSet, generics.RetrieveAPIView):
 
         serializer = ThanhVienHoiDongSerializer(thanhvien_hoidong)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    ###
+    @action(methods=['patch'], url_path='thanhviens/patch', detail=True)
+    def patch_thanhvien(self, request, pk):
+        hoidong = self.get_object()
+        thanhvien_id = request.data.get('thanhvien_id')
+        vaitro = request.data.get('vaitro')
 
+
+        try:
+            thanhvien = User.objects.get(pk=thanhvien_id)
+        except User.DoesNotExist:
+            return Response({'error:': 'Thanh vien khong ton tai'}, status=status.HTTP_404_NOT_FOUND)
+        if hoidong.thanhviens.filter(thanhvien_hoidong__vaitro='THANH VIEN KHAC').count()==2 and vaitro.__eq__("THANH VIEN KHAC") :
+            return Response({'error:':'Hoi Dong Co Toi Da 2 chuc vu nay'}, status=status.HTTP_400_BAD_REQUEST)
+        if vaitro not in [choice[0] for choice in ThanhVien_HoiDong.roles]:
+            return Response({'error: ': 'Vai tro khong hop le'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            if vaitro != 'THANH VIEN KHAC':
+                if ThanhVien_HoiDong.objects.filter(hoidong=hoidong, vaitro=vaitro).exists():
+                    return Response({'error:': 'Hoi Dong Nay Da Co Chuc Vu Nay'}, status=status.HTTP_400_BAD_REQUEST)
+        thanhvien_hoidong = ThanhVien_HoiDong.objects.get(thanhvien=thanhvien, hoidong=hoidong)
+        thanhvien_hoidong.vaitro = vaitro
+        thanhvien_hoidong.save()
+
+        serializer = ThanhVienHoiDongSerializer(thanhvien_hoidong)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    ###
     def get_permissions(self):
-        if self.action in ['destroy_thanhvien', 'post_thanhvien']:
+        if self.action in ['destroy_thanhvien', 'post_thanhvien', 'patch_thanhvien']:
             return [permissions.IsAuthenticated()]
         return super().get_permissions()
 
@@ -156,7 +183,7 @@ class UserViewset(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
 
         return Response(UserSerializer(user).data)
 
-    @action(methods=['get'], url_path='current-user/my_hoidong', detail=False)
+    @action(methods=['get'], url_path='current_user/my_hoidong', detail=False)
     def my_hoidong(self, request):
         user = self.request.user
         thanhvien_hoidong = ThanhVien_HoiDong.objects.filter(thanhvien=user)
@@ -205,41 +232,111 @@ class ListKhoaLuanViewSet(viewsets.ViewSet, generics.ListAPIView):
     serializer_class = KhoaLuanInfoSerializer
     pagination_class = paginators.Paginator
 
-class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAPIView):
+class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView):
     queryset = KhoaLuan.objects.all()
     serializer_class = KhoaLuanSerializer
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
     pagination_class = paginators.Paginator
 
-    def list(self, request):
+    def get_queryset(self):
+        queryset = self.queryset
+        q = self.request.query_params.get('q')
+        if q:
+            queryset = queryset.filter(ten__icontains=q)
+            return queryset
+        queryset = queryset.prefetch_related('gv_huongdan')
+        queryset = queryset.prefetch_related('sinhvien')
+        queryset = queryset.prefetch_related('tieuchis')
+        return queryset
+
+    def list_khoaluan(self, request):
         queryset = self.get_queryset()
         serializer = KhoaLuanInfoSerializer(queryset, many=True)
         return Response(serializer.data)
+    #
+    @action(methods=['get'], url_path='diem_detail', detail=True)
+    def diem_detail(self, reqest, pk):
+        khoaluan = self.get_object()
+        return Response(DiemSerializer(khoaluan).data)
 
+
+    @action(methods=['patch'], url_path='update_link', detail=True)
+    def update_link(self, request, pk):
+        khoaluan = self.get_object()
+        khoaluan.link = request.data.get('link')
+        khoaluan.save()
+        serializer = KhoaLuanSerializer(khoaluan)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    @action(methods=['patch'], url_path='block', detail=True)
+    def block_khoaluan(self, request, pk):
+        khoaluan = self.get_object()
+        khoaluan.trangthai = not khoaluan.trangthai
+        khoaluan.save()
+        serializer = KhoaLuanSerializer(khoaluan)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    @action(methods=['get'], url_path='get_tieuchi_not', detail=True)
+    def get_tieuchi_not(self, request, pk):
+        khoaluan = self.get_object()
+        tieuchis = khoaluan.tieuchis.all()
+        tieuchis_chuaco = TieuChi.objects.exclude(id__in=tieuchis.values_list('id', flat=True))
+        serializer = TieuChiNotIn(tieuchis_chuaco, many=True)
+        print(tieuchis_chuaco)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    @action(methods=['post'], url_path='create_diem', detail=True)
+    def create_diem(self, request,pk):
+        khoaluan = self.get_object()
+        try:
+            tieuchi = TieuChi.objects.get(ten=request.data.get('tieuchi'))
+        except:
+            return Response({'ERROR:': 'Tieu chi phai thuoc nhom cac tieu chi'}, status=status.HTTP_400_BAD_REQUEST)
+        if request.user.is_superuser != 1 and not khoaluan.hoidong.thanhviens.filter(id=request.user.id).exists() :
+            return Response({'ERROR:':'Nguoi danh gia phai thuoc hoi dong'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if khoaluan.tieuchis.filter(ten=tieuchi).exists():
+            return Response({'ERROR: ': 'Khoa Luan Nay Da Co Diem Tieu Chi Nay'}, status=status.HTTP_400_BAD_REQUEST)
+        diem = KhoaLuan_TieuChi.objects.create(nguoi_danhgia=request.user,
+                                               nhanxet=request.data.get('nhanxet'),
+                                               tieuchi=tieuchi,
+                                               so_diem=request.data.get('so_diem'),
+                                               khoaluan=self.get_object())
+        diem.save()
+        return Response(ChiTietDiemSerializer(diem).data, status=status.HTTP_201_CREATED)
+    ##
     @action(methods=['post'], url_path='create-khoaluan', detail=False)
     def create_khoaluan(self, request):
         ten = request.data.get('ten')
         ghichu = request.data.get('ghichu')
-        giaovu_id = request.data.get('giaovu')
+        giaovu_id = request.user
+        hoidong_id = request.data.get('hoidong_id')
         khoa_id = request.data.get('khoa')
         sinhvien_id = request.data.get('sinhvien', [])
         gvhuongdan_id = request.data.get('gv_huongdan', [])
-        # tieuchi_id = request.data.get('tieuchi', [])
+        sinhvien = User.objects.filter(pk__in=sinhvien_id, chucvu='HOCSINH')
+        if len(sinhvien) != len(sinhvien_id):
+            return Response({'err: ': 'Vui lòng chỉ nhập ID của người dùng có chức vụ HOCSINH'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not (ten and giaovu_id and khoa_id):
-            return Response({'error': 'ten, giaovu_id, and khoa_id là bắt buộc'},
+        gvhd = User.objects.filter(pk__in=gvhuongdan_id, chucvu='GIANGVIEN')
+        if len(gvhd) != len(gvhuongdan_id):
+            return Response({'err: ': 'Vui lòng chỉ nhập ID của người dùng có chức vụ GIANGVIEN'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not (ten and khoa_id):
+            return Response({'error': 'ten and khoa_id là bắt buộc'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            giaovu = User.objects.get(pk=giaovu_id)
+            giaovu = request.user
             khoa = Khoa.objects.get(pk=khoa_id)
-
+            hoidong = HoiDong.objects.get(pk=hoidong_id)
             sinhvien = User.objects.filter(pk__in=sinhvien_id)
             gv_huongdan = User.objects.filter(pk__in=gvhuongdan_id)
             # tieuchi = TieuChi.objects.filter(pk__in=tieuchi_id)
 
             new_khoaluan = KhoaLuan.objects.create(
-                ten=ten, ghichu=ghichu, giaovu=giaovu, khoa=khoa)
+                ten=ten, ghichu=ghichu, hoidong=hoidong,giaovu=request.user, khoa=khoa)
 
             new_khoaluan.sinhvien.set(sinhvien)
             new_khoaluan.gv_huongdan.set(gv_huongdan)
@@ -254,22 +351,55 @@ class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAP
     def update_khoaluan(self, request, pk):
         khoaluan = self.get_object()
         fields_to_update = ['ten', 'link',
-                            'ghichu', 'sinhvien', 'gv_huongdan', 'trangthai']  # cac truong dduoc phep update
+                            'ghichu', 'sinhvien', 'gv_huongdan', 'trangthai', 'giaovu','khoa', 'hoidong_id']  # cac truong dduoc phep update
 
         try:
             for field in fields_to_update:
                 if field in request.data:
-                    data = request.data[field]
-                    if isinstance(data, list):
-                        users = User.objects.filter(pk__in=data)
-                        getattr(khoaluan, field).set(users)
+
+
+                    ###
+                    #if field == 'khoa'
+                    # try:
+                    #         khoaluan.khoa = Khoa.objects.get(request.data.get('khoa'))
+                    #     except Exception as e:
+                    #         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                    ###
+                    if field == 'hoidong_id':
+                        hoidong_id = request.data['hoidong_id']
+                        try:
+
+                            hoidong = HoiDong.objects.get(pk=hoidong_id)
+                            khoaluan.hoidong = hoidong
+                            khoaluan.save()
+                        except Exception as e:
+                            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                    if field != 'khoa':
+                        data = request.data[field]
+                        if isinstance(data, list):
+                            users = User.objects.filter(pk__in=data)
+                            getattr(khoaluan, field).set(users)
+                        else:
+                            setattr(khoaluan, field, data)
+
                     else:
-                        setattr(khoaluan, field, data)
+                        khoa_id = request.data['khoa']
+                        try:
+
+                            khoa = Khoa.objects.get(pk=khoa_id)
+                            khoaluan.khoa = khoa
+                            khoaluan.save()
+                        except Exception as e:
+                            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                elif field != 'sinhvien':  # Kiểm tra nếu trường không phải là 'sinhvien'
+                    continue  # Bỏ qua việc cập nhật trường này nếu không có trong request.data
+
             khoaluan.save()
             data = KhoaLuanSerializer(khoaluan).data
             return Response(data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=True, methods=['delete'], url_path='delete-KhoaLuan')
     def delete_khoaluan(self, request, pk=None):
@@ -295,13 +425,33 @@ class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAP
             return Response(data, status=status.HTTP_200_OK)
         return Response({"message": "Không có khóa luận nào!!!"}, status=status.HTTP_404_NOT_FOUND)
 
-    def get_permissions(self):
-        if self.action in ['delete_khoaluan', 'update_khoaluan', 'create_khoaluan']:
-            return [permissions.IsAuthenticated(), IsPermitMinistry()]
-        return super().get_permissions()
+    # def get_permissions(self):
+    #     if self.action in ['delete_khoaluan', 'update_khoaluan', 'create_khoaluan', 'create_diem']:
+    #         return [permissions.IsAuthenticated()]
+    #     return super().get_permissions()
 
 class TieuChiViewset(viewsets.ViewSet, generics.ListAPIView):
     queryset = TieuChi.objects.all();
     serializer_class = TieuChiSerializer
 
 
+class EmailViewset(viewsets.ViewSet, generics.ListAPIView):
+    queryset = User.objects.all();
+    serializer_class = EmailSerializer
+
+class UserInfoViewset(viewsets.ViewSet, generics.ListAPIView):
+    queryset = User.objects.all();
+    serializer_class = UserNameAndId
+    def get_permissions(self):
+        # if self.action in ['destroy_thanhvien', 'post_thanhvien', 'patch_thanhvien']:
+        return [permissions.IsAuthenticated()]
+
+
+####
+def home(request):
+    return render(request, 'home.html', {
+        'message': 'Hello, World!'
+    })
+
+def diem_detail(request, id):
+    return render(request, 'diem_detail.html', {'id': id})
