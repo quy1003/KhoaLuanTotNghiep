@@ -21,5 +21,9 @@ urlpatterns = [
     path('', include(router.urls)),
     path('home/', views.home, name='home'),
     path('chitiet_diem/<int:id>/', views.diem_detail, name='diem_detail'),
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('admin/thongketansuat/', views.thong_ke_tan_suat, name='admin:thongketansuat'),
+    path('admin/thongkeavg/', views.thong_ke_avg, name='admin:thongkeavg'),
 
 ]

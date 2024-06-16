@@ -3,14 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>Chi tiết điểm</title>
+    <link rel="shortcut icon" href="https://th.bing.com/th/id/OIP.ZB8qQ8bsA80TlJzcb7Pj4wAAAA?rs=1&pid=ImgDetMain" />
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 
 <body>
+{% if user.is_authenticated %}
 <div id="root" style="padding: 1px 10px"}>
     <h1 id="h1Dom" style="background-color: #0055A8; padding: 20px; text-align: center; color: whitesmoke">
         Chi tiết điểm
     </h1>
+    <button onclick="window.location.href='http://127.0.0.1:8000/home/';" class="btn btn-primary"></i>Về trang trước</button>
+    <div style="width: 100%; margin-bottom: 10px"></div>
     <h4  style="display: inline-block; " >Tên khoá luận: </h4>
     <div id="thesisName"></div>
     <div></div>
@@ -28,6 +32,9 @@
         </thead>
     </table>
     <button id="exportToWord"  class="btn btn-primary float-right">In bảng điểm</button>
+    {% else %}
+    <p>Please <a href="{% url 'login' %}">login</a> to access this page.</p>
+{% endif %}
 
     <script>
 const exportToWordBtn = document.getElementById('exportToWord');
@@ -35,7 +42,7 @@ let thesName;
 fetch(`http://127.0.0.1:8000/diem_detail/{{id}}`)
   .then(response => response.json())
   .then(data => {
-
+    console.log(data)
     if(data.total_score === null || isNaN(data.total_score)){
     exportToWordBtn.style.display = 'none'
     }

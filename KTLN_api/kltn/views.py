@@ -8,12 +8,15 @@ from django.db.models import Q
 from rest_framework.decorators import action
 from kltn import serializers
 from .models import *
+from django.db.models.functions import ExtractYear
 from .serializers import *
 from rest_framework import generics
 from django.db.models import Prefetch
 from kltn.perms import IsPermitUser, IsPermitUserGivePoint, IsPermitMinistry
 from . import paginators
-from django.shortcuts import render
+from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import render, redirect
+
 class KhoaViewset(viewsets.ViewSet, generics.ListCreateAPIView):
     queryset = Khoa.objects.all()
     serializer_class = KhoaSerializer
@@ -86,7 +89,7 @@ class HoiDongDetailViewset(viewsets.ViewSet, generics.RetrieveAPIView):
         try:
 
             thanhvien.delete()
-            return Response({'msg:': 'Xoa Thanh Cong'}, status=status.HTTP_200_OK)
+            return Response({'msg': 'Xoa Thanh Cong'}, status=status.HTTP_200_OK)
         except thanhvien.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -98,22 +101,22 @@ class HoiDongDetailViewset(viewsets.ViewSet, generics.RetrieveAPIView):
 
 
         if hoidong.thanhviens.filter(thanhvien_hoidong__vaitro='THANH VIEN KHAC').count()==2 and vaitro.__eq__("THANH VIEN KHAC") :
-            return Response({'error:':'Hoi Dong Co Toi Da 2 chuc vu nay'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Hoi Dong Co Toi Da 2 chuc vu nay'}, status=status.HTTP_400_BAD_REQUEST)
         if hoidong.thanhviens.count() == 5:
-            return Response({'error:', 'So Thanh Vien Da Dat Toi Toi Da'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'So Thanh Vien Da Dat Toi Toi Da'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             thanhvien = User.objects.get(id=thanhvien_id)
         except User.DoesNotExist:
-            return Response({'error:': 'Thanh vien khong ton tai'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "Thành viên không tồn tại!!!"}, status=status.HTTP_404_NOT_FOUND)
         if vaitro not in [choice[0] for choice in ThanhVien_HoiDong.roles]:
-            return Response({'error: ': 'Vai tro khong hop le'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Vai trò không hợp lệ!!!"}, status=status.HTTP_404_NOT_FOUND)
         else:
             if vaitro != 'THANH VIEN KHAC':
                 if ThanhVien_HoiDong.objects.filter(hoidong=hoidong, vaitro=vaitro).exists():
-                    return Response({'error:': 'Hoi Dong Nay Da Co Chuc Vu Nay'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"message": "Hội đồng đã có chức vụ này!!!"}, status=status.HTTP_400_BAD_REQUEST)
 
         if ThanhVien_HoiDong.objects.filter(thanhvien=thanhvien, hoidong=hoidong).exists():
-            return Response({'error:': 'Thanh vien da co trong hoi dong'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Thành viên đã có trong hội đồng!!!"}, status=status.HTTP_404_NOT_FOUND)
 
         thanhvien_hoidong = ThanhVien_HoiDong(thanhvien=thanhvien, hoidong=hoidong, vaitro=vaitro)
         thanhvien_hoidong.save()
@@ -259,16 +262,6 @@ class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAP
         khoaluan = self.get_object()
         return Response(DiemSerializer(khoaluan).data)
 
-
-    @action(methods=['patch'], url_path='update_link', detail=True)
-    def update_link(self, request, pk):
-        khoaluan = self.get_object()
-        khoaluan.link = request.data.get('link')
-        khoaluan.save()
-        serializer = KhoaLuanSerializer(khoaluan)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
     @action(methods=['patch'], url_path='block', detail=True)
     def block_khoaluan(self, request, pk):
         khoaluan = self.get_object()
@@ -317,11 +310,11 @@ class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAP
         gvhuongdan_id = request.data.get('gv_huongdan', [])
         sinhvien = User.objects.filter(pk__in=sinhvien_id, chucvu='HOCSINH')
         if len(sinhvien) != len(sinhvien_id):
-            return Response({'err: ': 'Vui lòng chỉ nhập ID của người dùng có chức vụ HOCSINH'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Vui lòng chỉ nhập ID của người dùng có chức vụ HOCSINH'}, status=status.HTTP_400_BAD_REQUEST)
 
         gvhd = User.objects.filter(pk__in=gvhuongdan_id, chucvu='GIANGVIEN')
         if len(gvhd) != len(gvhuongdan_id):
-            return Response({'err: ': 'Vui lòng chỉ nhập ID của người dùng có chức vụ GIANGVIEN'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Vui lòng chỉ nhập ID của người dùng có chức vụ GIANGVIEN'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not (ten and khoa_id):
             return Response({'error': 'ten and khoa_id là bắt buộc'},
@@ -449,9 +442,82 @@ class UserInfoViewset(viewsets.ViewSet, generics.ListAPIView):
 
 ####
 def home(request):
+    message = request.session.get('message')
     return render(request, 'home.html', {
-        'message': 'Hello, World!'
+        'message': message
     })
 
 def diem_detail(request, id):
     return render(request, 'diem_detail.html', {'id': id})
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            user_role = user.chucvu
+            user_username = user.username
+            if user_role in ['ADMIN', 'GIAOVU']:
+                message = f"Chào {user_role} {user_username}!"
+                request.session['message'] = message
+                return redirect('/home/')
+            else:
+                error_message = 'Đăng nhập không hợp lệ.'
+                return render(request, 'login.html', {'error_message': error_message})
+        else:
+            err_msg = 'Invalid username or password'
+            return render(request, 'login.html', {'error_message:': err_msg})
+    else:
+        return render(request, 'login.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+####
+from django.db.models import Count
+def thong_ke_tan_suat(request):
+    selected_year = request.GET.get('year')
+    view_type = request.GET.get('view_type', 'tan_suat')
+
+    years = KhoaLuan.objects.annotate(year=ExtractYear('ngaytao')).values_list('year', flat=True).distinct()
+
+    if selected_year:
+        khoa_data = Khoa.objects.filter(khoaluan__ngaytao__year=selected_year).annotate(so_khoaluan=Count('khoaluan')).values('ten', 'so_khoaluan')
+    else:
+        khoa_data = Khoa.objects.annotate(so_khoaluan=Count('khoaluan')).values('ten', 'so_khoaluan')
+    context = {
+        'khoa_data': list(khoa_data),
+        'years': sorted(years),
+        'selected_year': int(selected_year) if selected_year else None,
+        'view_type': view_type
+    }
+
+    return render(request, 'thong_ke_tansuat.html', context)
+def thong_ke_avg(request):
+    selected_year = request.GET.get('year')
+
+    # Thống kê điểm trung bình khóa luận theo từng khoa
+    khoa_data = Khoa.objects.annotate(diem_trung_binh=Avg('khoaluan__khoaluan_tieuchi__so_diem'))
+    if selected_year:
+        khoa_data = khoa_data.filter(khoaluan__ngaytao__year=selected_year)
+
+    # Lấy danh sách các năm có khóa luận được tạo ra
+    years = KhoaLuan.objects.annotate(year=ExtractYear('ngaytao')).values_list('year', flat=True).distinct()
+
+    # Chuyển thành list để dễ xử lý hơn trong template
+    khoa_data = list(khoa_data.values('ten', 'diem_trung_binh'))
+
+    # Gán giá trị 0 cho các điểm trung bình rỗng hoặc None
+    for item in khoa_data:
+        if item['diem_trung_binh'] is None:
+            item['diem_trung_binh'] = 0
+
+    context = {
+        'khoa_data': khoa_data,
+        'years': sorted(years),
+        'selected_year': int(selected_year) if selected_year else None,
+    }
+    return render(request, 'thong_ke_avg.html', context)

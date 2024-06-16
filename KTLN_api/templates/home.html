@@ -1,19 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html style="height:100%" lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Trang chủ</title>
+    <link rel="shortcut icon" href="https://th.bing.com/th/id/OIP.ZB8qQ8bsA80TlJzcb7Pj4wAAAA?rs=1&pid=ImgDetMain" />
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
+<body style="height: 100%">
+{% if user.is_authenticated %}
 
-<body>
 <div id="root" style="padding: 1px 10px" }>
     <h1 style="background-color: #0055A8; padding: 20px; text-align: center; color: whitesmoke">
         Chi tiết khoá luận
     </h1>
+    <h5 style="text-align: right; color: blue">{{ message }}</h5>
+    <form style="
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;" action="{% url 'logout' %}" method="post">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">Đăng xuất</button>
+  </form>
     <div class="search-container float-right" style="margin-bottom: 10px">
         <input type="text" id="searchInput" placeholder="Tìm kiếm..." oninput="onChangeText()">
-        <button type="button" id="searchButton" onclick="findThesis()">Tìm</button>
+        <button class="btn-primary" type="button" id="searchButton" onclick="findThesis()">Tìm</button>
     </div>
     <table id="khoaLuanTable" class="table">
         <thead id="thead" style="color: red; font-size: 20px">
@@ -29,6 +39,21 @@
 
 </div>
 
+{% else %}
+<p>Please <a href="{% url 'login' %}">login</a> to access this page.</p>
+{% endif %}
+<footer style="background-color: #0055A8;
+              color: #fff;
+              padding: 20px;
+              text-align: center;
+              position: sticky;
+              bottom: 0;
+              width: 100%;
+              top: 90%;
+              margin-top: 40px;
+">
+        <p style="margin-bottom: 0">&copy; 2023 Thesis Management Website</p>
+</footer>
 <script>
     function onChangeText() {
   const searchInput = document.getElementById('searchInput');
@@ -111,13 +136,16 @@
       moreButton.style.marginLeft = '10px';
       moreButton.style.marginBottom = '10px';
       moreButton.style.display = 'block';
-      moreButton.style.margin = '0 auto';
+      moreButton.style.position = 'absolute';
+      moreButton.style.left = '50%';
+
       moreButton.addEventListener('click', () => {
         currentPage++;
-        fetchMoreDataSearch(currentPage);
 
+        fetchMoreDataSearch(currentPage);
       });
-      document.body.appendChild(moreButton);
+
+      table.appendChild(moreButton);
     }
 
   })
@@ -186,6 +214,8 @@ fetch('http://127.0.0.1:8000/khoaluans/?page=1')
     const table = document.getElementById('khoaLuanTable');
     table.appendChild(tableBody);
 
+    const lastChild = document.body.lastElementChild
+    console.log(lastChild.toString())
 
     if (data.next) {
       moreButton = document.createElement('button');
@@ -195,12 +225,14 @@ fetch('http://127.0.0.1:8000/khoaluans/?page=1')
       moreButton.style.marginLeft = '10px';
       moreButton.style.marginBottom = '10px';
       moreButton.style.display = 'block';
-      moreButton.style.margin = '0 auto';
+      moreButton.style.position = 'absolute';
+      moreButton.style.left = '50%';
       moreButton.addEventListener('click', () => {
         currentPage++;
         fetchMoreData(currentPage);
       });
-      document.body.appendChild(moreButton);
+
+      table.appendChild(moreButton);
     }
   })
   .catch(error => console.error(error));
@@ -271,9 +303,10 @@ function fetchMoreData(page) {
 
         moreButton.addEventListener('click', () => {
           currentPage++;
+
           fetchMoreData(currentPage);
         });
-        document.body.appendChild(moreButton);
+        table.appendChild(moreButton);
       }
       else{
 if (moreButton) {
@@ -350,9 +383,10 @@ const searchInput = document.getElementById('searchInput')
 
         moreButton.addEventListener('click', () => {
           currentPage++;
+
           fetchMoreDataSearch(currentPage);
         });
-        document.body.appendChild(moreButton);
+        table.appendChild(moreButton);
       }
       else{
 if (moreButton) {
@@ -364,11 +398,6 @@ if (moreButton) {
     })
     .catch(error => console.error(error));
 }
-
-
-
-
-
 </script>
 </body>
 </html>
