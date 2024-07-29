@@ -13,7 +13,7 @@
     <h1 id="h1Dom" style="background-color: #0055A8; padding: 20px; text-align: center; color: whitesmoke">
         Chi tiết điểm
     </h1>
-    <button onclick="window.location.href='http://127.0.0.1:8000/home/';" class="btn btn-primary"></i>Về trang trước</button>
+    <button onclick="window.location.href='http://10.17.36.194:8000/home/';" class="btn btn-primary"></i>Về trang trước</button>
     <div style="width: 100%; margin-bottom: 10px"></div>
     <h4  style="display: inline-block; " >Tên khoá luận: </h4>
     <div id="thesisName"></div>
@@ -39,7 +39,7 @@
     <script>
 const exportToWordBtn = document.getElementById('exportToWord');
 let thesName;
-fetch(`http://127.0.0.1:8000/diem_detail/{{id}}`)
+fetch(`http://10.17.36.194:8000/diem_detail/{{id}}`)
   .then(response => response.json())
   .then(data => {
     console.log(data)

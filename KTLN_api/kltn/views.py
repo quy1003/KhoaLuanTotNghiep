@@ -101,22 +101,22 @@ class HoiDongDetailViewset(viewsets.ViewSet, generics.RetrieveAPIView):
 
 
         if hoidong.thanhviens.filter(thanhvien_hoidong__vaitro='THANH VIEN KHAC').count()==2 and vaitro.__eq__("THANH VIEN KHAC") :
-            return Response({'error': 'Hoi Dong Co Toi Da 2 chuc vu nay'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': 'Hoi Dong Co Toi Da 2 chuc vu nay'}, status=status.HTTP_400_BAD_REQUEST)
         if hoidong.thanhviens.count() == 5:
-            return Response({'error': 'So Thanh Vien Da Dat Toi Toi Da'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': 'So Thanh Vien Da Dat Toi Toi Da'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             thanhvien = User.objects.get(id=thanhvien_id)
         except User.DoesNotExist:
-            return Response({"message": "Thành viên không tồn tại!!!"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"msg": "Thành viên không tồn tại!!!"}, status=status.HTTP_404_NOT_FOUND)
         if vaitro not in [choice[0] for choice in ThanhVien_HoiDong.roles]:
-            return Response({"message": "Vai trò không hợp lệ!!!"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"msg": "Vai trò không hợp lệ!!!"}, status=status.HTTP_404_NOT_FOUND)
         else:
             if vaitro != 'THANH VIEN KHAC':
                 if ThanhVien_HoiDong.objects.filter(hoidong=hoidong, vaitro=vaitro).exists():
-                    return Response({"message": "Hội đồng đã có chức vụ này!!!"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"msg": "Hội đồng đã có chức vụ này!!!"}, status=status.HTTP_400_BAD_REQUEST)
 
         if ThanhVien_HoiDong.objects.filter(thanhvien=thanhvien, hoidong=hoidong).exists():
-            return Response({"message": "Thành viên đã có trong hội đồng!!!"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"msg": "Thành viên đã có trong hội đồng!!!"}, status=status.HTTP_404_NOT_FOUND)
 
         thanhvien_hoidong = ThanhVien_HoiDong(thanhvien=thanhvien, hoidong=hoidong, vaitro=vaitro)
         thanhvien_hoidong.save()
@@ -216,12 +216,12 @@ class DiemDetailViewset(viewsets.ViewSet, generics.RetrieveAPIView):
         try:
             tieuchi = TieuChi.objects.get(ten=request.data.get('tieuchi'))
         except:
-            return Response({'ERROR:': 'Tieu chi phai thuoc nhom cac tieu chi'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': 'Tieu chi phai thuoc nhom cac tieu chi'}, status=status.HTTP_400_BAD_REQUEST)
         if request.user.is_superuser != 1 and not khoaluan.hoidong.thanhviens.filter(id=request.user.id).exists() :
-            return Response({'ERROR:':'Nguoi danh gia phai thuoc hoi dong'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg':'Nguoi danh gia phai thuoc hoi dong'}, status=status.HTTP_400_BAD_REQUEST)
 
         if khoaluan.tieuchis.filter(ten=tieuchi).exists():
-            return Response({'ERROR: ': 'Khoa Luan Nay Da Co Diem Tieu Chi Nay'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': 'Khoa Luan Nay Da Co Diem Tieu Chi Nay'}, status=status.HTTP_400_BAD_REQUEST)
         diem = KhoaLuan_TieuChi.objects.create(nguoi_danhgia=request.user,
                                                nhanxet=request.data.get('nhanxet'),
                                                tieuchi=tieuchi,
@@ -285,12 +285,12 @@ class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAP
         try:
             tieuchi = TieuChi.objects.get(ten=request.data.get('tieuchi'))
         except:
-            return Response({'ERROR:': 'Tieu chi phai thuoc nhom cac tieu chi'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': 'Tieu chi phai thuoc nhom cac tieu chi'}, status=status.HTTP_400_BAD_REQUEST)
         if request.user.is_superuser != 1 and not khoaluan.hoidong.thanhviens.filter(id=request.user.id).exists() :
-            return Response({'ERROR:':'Nguoi danh gia phai thuoc hoi dong'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': 'Nguoi danh gia phai thuoc hoi dong'}, status=status.HTTP_400_BAD_REQUEST)
 
         if khoaluan.tieuchis.filter(ten=tieuchi).exists():
-            return Response({'ERROR: ': 'Khoa Luan Nay Da Co Diem Tieu Chi Nay'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': 'Khoa Luan Nay Da Co Diem Tieu Chi Nay'}, status=status.HTTP_400_BAD_REQUEST)
         diem = KhoaLuan_TieuChi.objects.create(nguoi_danhgia=request.user,
                                                nhanxet=request.data.get('nhanxet'),
                                                tieuchi=tieuchi,
@@ -309,15 +309,21 @@ class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAP
         sinhvien_id = request.data.get('sinhvien', [])
         gvhuongdan_id = request.data.get('gv_huongdan', [])
         sinhvien = User.objects.filter(pk__in=sinhvien_id, chucvu='HOCSINH')
+
+
+        if KhoaLuan.objects.filter(sinhvien__in=sinhvien_id).exists():
+            return Response({'msg': 'Sinh viên đã tham gia khoá luận rồi'}, status=status.HTTP_400_BAD_REQUEST)
+
+
         if len(sinhvien) != len(sinhvien_id):
-            return Response({'error': 'Vui lòng chỉ nhập ID của người dùng có chức vụ HOCSINH'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': 'Vui lòng chỉ nhập ID của người dùng có chức vụ HOCSINH'}, status=status.HTTP_400_BAD_REQUEST)
 
         gvhd = User.objects.filter(pk__in=gvhuongdan_id, chucvu='GIANGVIEN')
         if len(gvhd) != len(gvhuongdan_id):
-            return Response({'error': 'Vui lòng chỉ nhập ID của người dùng có chức vụ GIANGVIEN'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': 'Vui lòng chỉ nhập ID của người dùng có chức vụ GIANGVIEN'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not (ten and khoa_id):
-            return Response({'error': 'ten and khoa_id là bắt buộc'},
+            return Response({'msg': 'ten and khoa_id là bắt buộc'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -338,7 +344,7 @@ class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAP
             data = KhoaLuanSerializer(new_khoaluan).data
             return Response(data, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['patch'], url_path='update-khoaluan', detail=True)
     def update_khoaluan(self, request, pk):
@@ -350,14 +356,6 @@ class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAP
             for field in fields_to_update:
                 if field in request.data:
 
-
-                    ###
-                    #if field == 'khoa'
-                    # try:
-                    #         khoaluan.khoa = Khoa.objects.get(request.data.get('khoa'))
-                    #     except Exception as e:
-                    #         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-                    ###
                     if field == 'hoidong_id':
                         hoidong_id = request.data['hoidong_id']
                         try:
@@ -391,7 +389,7 @@ class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAP
             data = KhoaLuanSerializer(khoaluan).data
             return Response(data, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
     @action(detail=True, methods=['delete'], url_path='delete-KhoaLuan')
@@ -399,9 +397,9 @@ class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAP
         try:
             khoaluan = self.get_object()
             khoaluan.delete()
-            return Response({'message': 'KhoaLuan đã được xóa thành công'}, status=status.HTTP_204_NO_CONTENT)
+            return Response({'msg': 'KhoaLuan đã được xóa thành công'}, status=status.HTTP_204_NO_CONTENT)
         except KhoaLuan.DoesNotExist:
-            return Response({'error': 'KhoaLuan không tồn tại'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'msg': 'KhoaLuan không tồn tại'}, status=status.HTTP_404_NOT_FOUND)
 
     @action(methods=['get'], detail=False, url_path="not-hoidong")
     def not_hoidong(self, request):
@@ -416,7 +414,7 @@ class KhoaLuanViewset(viewsets.ViewSet,generics.ListAPIView, generics.RetrieveAP
         if mykhoaluan.exists():
             data = KhoaLuanSerializer(mykhoaluan, many=True).data
             return Response(data, status=status.HTTP_200_OK)
-        return Response({"message": "Không có khóa luận nào!!!"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"msg": "Không có khóa luận nào!!!"}, status=status.HTTP_404_NOT_FOUND)
 
     # def get_permissions(self):
     #     if self.action in ['delete_khoaluan', 'update_khoaluan', 'create_khoaluan', 'create_diem']:

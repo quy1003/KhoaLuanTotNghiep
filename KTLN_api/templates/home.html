@@ -68,7 +68,7 @@
     const searchInput = document.getElementById('searchInput')
     const searchValue = searchInput.value;
     console.log('tìm kiếm: ' + searchValue);
-    fetch(`http://127.0.0.1:8000/khoaluans/?q=${searchValue}`)
+    fetch(`http://10.17.36.194:8000/khoaluans/?q=${searchValue}`)
   .then(response => response.json())
   .then(data => {
     console.log(data)
@@ -154,7 +154,7 @@
 
     let currentPage = 1;
     let moreButton = null
-fetch('http://127.0.0.1:8000/khoaluans/?page=1')
+fetch('http://10.17.36.194:8000/khoaluans/?page=1')
   .then(response => response.json())
   .then(data => {
     const tableBody = document.createElement('tbody');
@@ -238,7 +238,7 @@ fetch('http://127.0.0.1:8000/khoaluans/?page=1')
   .catch(error => console.error(error));
 
 function fetchMoreData(page) {
-  fetch(`http://127.0.0.1:8000/khoaluans/?page=${page}`)
+  fetch(`http://10.17.36.194:8000/khoaluans/?page=${page}`)
     .then(response => response.json())
     .then(data => {
       const newTableBody = document.createElement('tbody');
@@ -319,7 +319,7 @@ if (moreButton) {
 function fetchMoreDataSearch(page) {
 const searchInput = document.getElementById('searchInput')
     const searchValue = searchInput.value;
-  fetch(`http://127.0.0.1:8000/khoaluans/?page=${page}&q=${searchValue}`)
+  fetch(`http://10.17.36.194:8000/khoaluans/?page=${page}&q=${searchValue}`)
     .then(response => response.json())
     .then(data => {
       const newTableBody = document.createElement('tbody');
